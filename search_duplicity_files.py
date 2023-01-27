@@ -57,7 +57,9 @@ def get_hash(path_file: str) -> str:
     :param path_file: Path to file.
     :return: str
     """
-    pass
+    with open(path_file, "rb") as file:
+        hash_file = md5(file.read()).hexdigest()
+    return hash_file
 
 
 def search_duplicity_files():
