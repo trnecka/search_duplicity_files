@@ -1,4 +1,9 @@
-from sqlalchemy.orm import Session
+import os
+from hashlib import md5
+
+import pytest
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import Session, sessionmaker, declarative_base
 
 
 def load_files(root_folder: str) -> list:
@@ -8,7 +13,11 @@ def load_files(root_folder: str) -> list:
     :param root_folder: str
     :return: list
     """
-    pass
+    list_files = list()
+    for (path, _, files) in os.walk(root_folder):
+        for file_name in files:
+            list_files.append(os.path.abspath((os.path.join(path, file_name))))
+    return list_files
 
 
 def db_init(connection_string: str) -> Session:
