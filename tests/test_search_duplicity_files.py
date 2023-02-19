@@ -1,7 +1,8 @@
-import pytest
-
-import search_duplicity_files as sdf
 import os
+import sys
+
+sys.path.append('../')
+import search_duplicity_files as sdf
 
 # constants for testing
 ROOT_FOLDER = os.path.abspath("test_files") + "/"
