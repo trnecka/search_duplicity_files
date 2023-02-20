@@ -1,6 +1,8 @@
 import os
 from hashlib import md5
 
+from sqlalchemy.sql.operators import and_
+
 import db
 
 
@@ -49,14 +51,14 @@ def get_parent_file_id(session, file: str) -> int:
 
 def file_exists(session, file: str) -> bool:
     """
-    Check if the file exists in database.
+    Check if the file exists in database. File has to have the same hash and filename.
 
     :param session: The function create_session() from the file db.py
     :param file: Full path to the file.
     :return: It returns True or False
     """
     return bool(session.query(db.File).filter(
-        db.File.filename == file
+        and_(db.File.filename == file, db.File.filename == get_hash(file))
     ).first())
 
 
@@ -68,18 +70,19 @@ def new_files(session, files: list) -> list:
     :param files: The list of the file with full paths.
     :return: List of the dictionaries with the keys 'filehash', 'filename', 'parent_file_id'
     """
-    list_files = list()
     for file in files:
 
         if not file_exists(session, file):
-            f = {
-                "filehash": get_hash(file),
-                "filename": file,
-                "parent_file_id": get_parent_file_id(session, file)
-            }
-            list_files.append(f)
+            session.add(
+                db.File(
+                    filehash=get_hash(file),
+                    filename=file,
+                    parent_file_id=get_parent_file_id(session, file)
+                )
+            )
+        session.commit()
 
-    return list_files
+
 
 
 def search_duplicity_files():
@@ -88,14 +91,15 @@ def search_duplicity_files():
     session = db.create_session(engine)
     files = load_files("tests/test_files")
 
-    for file in new_files(session, files):
-        f = db.File(
-                filehash=file.get("filehash"),
-                filename=file.get("filename"),
-                parent_file_id=file.get("parent_file_id")
-            )
-        session.add(f)
-    session.commit()
+    new_files(session, files)
+    # for file in new_files(session, files):
+    #     f = db.File(
+    #             filehash=file.get("filehash"),
+    #             filename=file.get("filename"),
+    #             parent_file_id=file.get("parent_file_id")
+    #         )
+    #     session.add(f)
+    # session.commit()
 
 
 if __name__ == '__main__':
