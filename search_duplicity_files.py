@@ -58,29 +58,53 @@ def file_exists(session, file: str) -> bool:
     :return: It returns True or False
     """
     return bool(session.query(db.File).filter(
-        and_(db.File.filename == file, db.File.filename == get_hash(file))
+        and_(db.File.filename == file, db.File.filehash == get_hash(file))
     ).first())
 
 
-def new_files(session, files: list) -> None:
+def is_file_changed(session, file: str):
     """
-    Creating the list of the added files to original database.
+    The function check if the file is the same as the file saved in the database.
+    The file has the same path (like in the database) but it has different content.
+
+    :param session: The function create_session() from the file db.py
+    :param file: Full path to the file.
+    :return: Full path to the file which it is different in the database.
+    """
+    input_file_hash = get_hash(file)
+    database_file = session.query(db.File).filter(
+        db.File.filename == file
+    ).first()
+    if database_file is not None:
+        if input_file_hash != database_file.filehash:
+            return database_file.filename
+    return False
+
+
+def save_files(session, files: list) -> list:
+    """
+    Saving files to the database.
+    Function checks the changes of the files in the database and returns these changes.
 
     :param session: The function create_session() from the file db.py
     :param files: The list of the file with full paths.
-    :return: List of the dictionaries with the keys 'filehash', 'filename', 'parent_file_id'
+    :return: List of the changed files
     """
+    changed_file = list()
     for file in files:
-
         if not file_exists(session, file):
-            session.add(
-                db.File(
-                    filehash=get_hash(file),
-                    filename=file,
-                    parent_file_id=get_parent_file_id(session, file)
+            if chf := is_file_changed(session, file):
+                changed_file.append(chf)
+            else:
+                session.add(
+                    db.File(
+                        filehash=get_hash(file),
+                        filename=file,
+                        parent_file_id=get_parent_file_id(session, file)
+                    )
                 )
-            )
-        session.commit()
+                session.commit()
+    return changed_file
 
 
 def search_duplicity_files():
@@ -89,7 +113,8 @@ def search_duplicity_files():
     session = db.create_session(engine)
     files = load_files("tests/test_files")
 
-    new_files(session, files)
+    # print the list of the changed files
+    print(save_files(session, files))
 
 
 if __name__ == '__main__':
