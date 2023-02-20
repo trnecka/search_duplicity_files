@@ -62,7 +62,7 @@ def file_exists(session, file: str) -> bool:
     ).first())
 
 
-def new_files(session, files: list) -> list:
+def new_files(session, files: list) -> None:
     """
     Creating the list of the added files to original database.
 
@@ -83,8 +83,6 @@ def new_files(session, files: list) -> list:
         session.commit()
 
 
-
-
 def search_duplicity_files():
     engine = db.load_engine()
     db.create_db_structure(engine)
@@ -92,14 +90,6 @@ def search_duplicity_files():
     files = load_files("tests/test_files")
 
     new_files(session, files)
-    # for file in new_files(session, files):
-    #     f = db.File(
-    #             filehash=file.get("filehash"),
-    #             filename=file.get("filename"),
-    #             parent_file_id=file.get("parent_file_id")
-    #         )
-    #     session.add(f)
-    # session.commit()
 
 
 if __name__ == '__main__':

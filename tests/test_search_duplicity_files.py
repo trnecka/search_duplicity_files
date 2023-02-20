@@ -38,16 +38,3 @@ def create_basic_database():
     db.create_db_structure(engine)
     session = db.create_session(engine)
     return session
-
-
-def test_new_files_number_of_new_files_is_17():
-    session = create_basic_database()
-    loading_files = sdf.load_files('test_files')
-    assert len(sdf.new_files(session, loading_files)) == 17
-
-
-def test_new_files_number_added_files_from_folder_test_new_files_is_1():
-    session = create_basic_database()
-    loading_files = sdf.load_files('test_new_files')
-    assert len(sdf.new_files(session, loading_files)) == 1
-
