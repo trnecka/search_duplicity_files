@@ -107,14 +107,41 @@ def save_files(session, files: list) -> list:
     return changed_file
 
 
+def load_duplicate_files(session):
+    """
+    Loading duplicate files. It finds original file and their copies.
+    It returns only files which has some duplicate.
+
+    :param session: The function create_session() from the file db.py
+    :return: List of the dictionaries. Dicticrionary contents key 'file_original' and 'file_copy'.
+    """
+    db_file_id = session.query(db.File.parent_file_id).filter(db.File.parent_file_id > 0).\
+        group_by(db.File.parent_file_id).all()
+    original_file_id = [ld[0] for ld in db_file_id]
+    duplicate_files = list()
+    for ofi in original_file_id:
+        files = {
+            'file_original': session.query(db.File).filter(db.File.id == ofi).first(),
+            'file_copy': session.query(db.File).filter(db.File.parent_file_id == ofi).all()
+        }
+        duplicate_files.append(files)
+    return duplicate_files
+
+
 def search_duplicity_files():
     engine = db.load_engine()
     db.create_db_structure(engine)
     session = db.create_session(engine)
     files = load_files("tests/test_files")
-
     # print the list of the changed files
     print(save_files(session, files))
+
+    # write all duplicate name of the files with their original (first record in the database)
+    # example output
+    for df in load_duplicate_files(session):
+        print(df.get('file_original').filename)
+        for f in df.get('file_copy'):
+            print(f"\t{f.filename}")
 
 
 if __name__ == '__main__':
