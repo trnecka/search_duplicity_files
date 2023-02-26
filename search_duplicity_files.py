@@ -128,6 +128,19 @@ def load_duplicate_files(session):
     return duplicate_files
 
 
+def get_duplicates_for_file(session, file: str) -> list:
+    """
+    Function gets all duplicates by full path to file
+
+    :param session: The function create_session() from the file db.py
+    :param file: Full path to the file.
+    :return: List of the object File sorted by 'parent_file_id'.
+    """
+    hash_file = get_hash(file)
+    duplicates = session.query(db.File).filter(db.File.filehash == hash_file).order_by(db.File.parent_file_id).all()
+    return duplicates
+
+
 def search_duplicity_files():
     engine = db.load_engine()
     db.create_db_structure(engine)
@@ -142,6 +155,12 @@ def search_duplicity_files():
         print(df.get('file_original').filename)
         for f in df.get('file_copy'):
             print(f"\t{f.filename}")
+
+    # write all duplicate files of one concrete file
+    # example output
+    print(f'Duplicates for file "{os.path.abspath("tests/test_files/pes-seznamka-1.jpg")}"')
+    for gdff in get_duplicates_for_file(session, os.path.abspath("tests/test_files/pes-seznamka-1.jpg")):
+        print(gdff.filename)
 
 
 if __name__ == '__main__':
