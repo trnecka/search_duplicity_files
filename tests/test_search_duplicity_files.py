@@ -29,7 +29,7 @@ def test_get_hash_hash_exists_for_file():
     assert sdf.get_hash(file) == hash_for_file
 
 
-def create_basic_database():
+def basic_database_create():
     import config
     database_file = config.CONNECTION_STRING.split('/')[-1]
     if os.path.isfile(database_file):
@@ -38,3 +38,52 @@ def create_basic_database():
     db.create_db_structure(engine)
     session = db.create_session(engine)
     return session
+
+
+def test_save_files_number_of_changed_files_after_first_saving_files_to_database_is_0():
+    session = basic_database_create()
+    files = sdf.load_files('test_files')
+    list_changed_files = sdf.save_files(session, files)
+    assert len(list_changed_files) == 0
+
+
+def test_save_files_number_of_changed_file_after_change_file_content_is_1():
+    """
+    The test of the change file in the course of the test
+    The scenario of the test:
+        -1. Creating the file
+        -2. Saving the file to the database
+        -3. Changing of the file
+        -4. Saving changed file to the database
+        -5. Saving the return value from the function save_files() to the variable
+        -6. Deleting the file which created this test
+    """
+    # initialize to the database and create full path to the new file
+    session = basic_database_create()
+    new_file = os.path.abspath('test_files') + '/test_file.txt'
+
+    # creating a file
+    with open(new_file, 'w') as f:
+        import random
+        import string
+        f.write(''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(100)))
+
+    # saving created file to database
+    file = sdf.load_files('test_files')
+    sdf.save_files(session, file)
+
+    # changing created file content
+    with open(new_file, 'a') as f:
+        f.write('Append text')
+
+    # saving changed file to the database
+    edited_file = sdf.load_files('test_files')
+    changed_files = sdf.save_files(session, edited_file)
+
+    # delete testing file
+    if os.path.isfile(new_file):
+        os.remove(new_file)
+
+    assert len(changed_files) == 1
+
+
