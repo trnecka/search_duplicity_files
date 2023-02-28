@@ -134,8 +134,11 @@ def get_duplicates_for_file(session, file: str) -> list:
 
     :param session: The function create_session() from the file db.py
     :param file: Full path to the file.
-    :return: List of the object File sorted by 'parent_file_id'.
+    :return: List of the object File sorted by 'parent_file_id'. If the file does not exist, this function returns empty list.
     """
+    if not os.path.exists(file):
+        return []
+
     hash_file = get_hash(file)
     duplicates = session.query(db.File).filter(db.File.filehash == hash_file).order_by(db.File.parent_file_id).all()
     return duplicates
