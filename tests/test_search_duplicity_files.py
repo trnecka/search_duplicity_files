@@ -130,3 +130,26 @@ def test_load_duplicate_files_loaded_files_are_in_the_list():
         for f in lf.get('file_copy'):
             assert f.filename in loaded_files_joined
 
+
+def test_get_duplicates_for_file_file_rqhHrL_jpeg_has_min_one_duplicate():
+    session = basic_database_create()
+    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    test_file = os.path.abspath('test_files/rqhHrL.jpeg')
+
+    assert len(sdf.get_duplicates_for_file(session, test_file)) > 1
+
+
+def test_get_duplicates_for_file_file_PUmFFwcN_html_does_not_have_duplicate():
+    session = basic_database_create()
+    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    test_file = os.path.abspath('test_files/PUmFFwcN.html')
+
+    assert len(sdf.get_duplicates_for_file(session, test_file)) == 1
+
+
+def test_get_duplicates_for_file_file_testovaci_txt_does_not_exists():
+    session = basic_database_create()
+    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    test_file = os.path.abspath('test_files/testovaci.txt')
+
+    assert len(sdf.get_duplicates_for_file(session, test_file)) == 0
