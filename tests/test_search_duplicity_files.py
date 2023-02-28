@@ -8,6 +8,27 @@ import db
 # constants for testing
 ROOT_FOLDER = os.path.abspath("test_files") + "/"
 
+# dataset for test
+LIST_DUPLICATE_FILES = [
+    [
+        'test_files/African_Elephant_(188286877).jpeg',
+        'test_files/animals/African_Elephant_(188286877).jpeg'
+    ],
+    [
+        'test_files/dog-gfb6b9f480_1280.jpg',
+        'test_files/animals/dog-gfb6b9f480_1280.jpg',
+        'test_files/pes-duplicity.jpg'
+    ],
+    [
+        'test_files/pes-seznamka-1.jpg',
+        'test_files/animals/pes-seznamka-1.jpg'
+    ],
+    [
+        'test_files/rqhHrL.jpeg',
+        'test_files/lavicka-duplicity.jpeg'
+    ]
+]
+
 
 def test_load_files_number_of_files_is_17():
     assert len(sdf.load_files(ROOT_FOLDER)) == 17
@@ -42,7 +63,7 @@ def basic_database_create():
 
 def test_save_files_number_of_changed_files_after_first_saving_files_to_database_is_0():
     session = basic_database_create()
-    files = sdf.load_files('test_files')
+    files = sdf.load_files(ROOT_FOLDER)
     list_changed_files = sdf.save_files(session, files)
     assert len(list_changed_files) == 0
 
@@ -60,7 +81,7 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
     """
     # initialize to the database and create full path to the new file
     session = basic_database_create()
-    new_file = os.path.abspath('test_files') + '/test_file.txt'
+    new_file = ROOT_FOLDER + '/test_file.txt'
 
     # creating a file
     with open(new_file, 'w') as f:
@@ -69,7 +90,7 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
         f.write(''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(100)))
 
     # saving created file to database
-    file = sdf.load_files('test_files')
+    file = sdf.load_files(ROOT_FOLDER)
     sdf.save_files(session, file)
 
     # changing created file content
@@ -77,7 +98,7 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
         f.write('Append text')
 
     # saving changed file to the database
-    edited_file = sdf.load_files('test_files')
+    edited_file = sdf.load_files(ROOT_FOLDER)
     changed_files = sdf.save_files(session, edited_file)
 
     # delete testing file
@@ -88,39 +109,19 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
 
 
 def test_load_duplicate_files_loaded_files_are_in_the_list():
-    # dataset for test
-    list_duplicate_files = [
-        [
-            'test_files/African_Elephant_(188286877).jpeg',
-            'test_files/animals/African_Elephant_(188286877).jpeg'
-        ],
-        [
-            'test_files/dog-gfb6b9f480_1280.jpg',
-            'test_files/animals/dog-gfb6b9f480_1280.jpg',
-            'test_files/pes-duplicity.jpg'
-        ],
-        [
-            'test_files/pes-seznamka-1.jpg',
-            'test_files/animals/pes-seznamka-1.jpg'
-        ],
-        [
-            'test_files/rqhHrL.jpeg',
-            'test_files/lavicka-duplicity.jpeg'
-        ]
-    ]
 
     # creating the database
     session = basic_database_create()
 
     # saving the data to the database
-    sdf.save_files(session, sdf.load_files('test_files'))
+    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
 
     # loading data from database
     loaded_files = sdf.load_duplicate_files(session)
 
     # prepare of the dataset
     loaded_files_joined = list()
-    for file in list_duplicate_files:
+    for file in LIST_DUPLICATE_FILES:
         loaded_files_joined.extend([os.path.abspath(f) for f in file])
 
     # test
