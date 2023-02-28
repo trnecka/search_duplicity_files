@@ -87,3 +87,45 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
     assert len(changed_files) == 1
 
 
+def test_load_duplicate_files_loaded_files_are_in_the_list():
+    # dataset for test
+    list_duplicate_files = [
+        [
+            'test_files/African_Elephant_(188286877).jpeg',
+            'test_files/animals/African_Elephant_(188286877).jpeg'
+        ],
+        [
+            'test_files/dog-gfb6b9f480_1280.jpg',
+            'test_files/animals/dog-gfb6b9f480_1280.jpg',
+            'test_files/pes-duplicity.jpg'
+        ],
+        [
+            'test_files/pes-seznamka-1.jpg',
+            'test_files/animals/pes-seznamka-1.jpg'
+        ],
+        [
+            'test_files/rqhHrL.jpeg',
+            'test_files/lavicka-duplicity.jpeg'
+        ]
+    ]
+
+    # creating the database
+    session = basic_database_create()
+
+    # saving the data to the database
+    sdf.save_files(session, sdf.load_files('test_files'))
+
+    # loading data from database
+    loaded_files = sdf.load_duplicate_files(session)
+
+    # prepare of the dataset
+    loaded_files_joined = list()
+    for file in list_duplicate_files:
+        loaded_files_joined.extend([os.path.abspath(f) for f in file])
+
+    # test
+    for lf in loaded_files:
+        assert lf.get('file_original').filename in loaded_files_joined
+        for f in lf.get('file_copy'):
+            assert f.filename in loaded_files_joined
+
