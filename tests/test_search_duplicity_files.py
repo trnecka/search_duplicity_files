@@ -31,16 +31,19 @@ LIST_DUPLICATE_FILES = [
 
 
 def test_load_files_number_of_files_is_17():
-    assert len(sdf.load_files(ROOT_FOLDER)) == 17
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    assert len(files) == 17
 
 
 def test_load_files_list_contents_file_rqhhrl_jpeg():
     existing_file = ROOT_FOLDER + "rqhHrL.jpeg"
-    assert existing_file in sdf.load_files(ROOT_FOLDER)
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    assert existing_file in files
 
 
 def test_load_files_all_files_exists_on_drive():
-    for files in sdf.load_files(ROOT_FOLDER):
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    for files in files:
         assert os.path.exists(files)
 
 
@@ -63,8 +66,8 @@ def basic_database_create():
 
 def test_save_files_number_of_changed_files_after_first_saving_files_to_database_is_0():
     session = basic_database_create()
-    files = sdf.load_files(ROOT_FOLDER)
-    list_changed_files = sdf.save_files(session, files)
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    list_changed_files = sdf.save_files(session, files, root_folder)
     assert len(list_changed_files) == 0
 
 
@@ -90,16 +93,16 @@ def test_save_files_number_of_changed_file_after_change_file_content_is_1():
         f.write(''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(100)))
 
     # saving created file to database
-    file = sdf.load_files(ROOT_FOLDER)
-    sdf.save_files(session, file)
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    sdf.save_files(session, files, root_folder)
 
     # changing created file content
     with open(new_file, 'a') as f:
         f.write('Append text')
 
     # saving changed file to the database
-    edited_file = sdf.load_files(ROOT_FOLDER)
-    changed_files = sdf.save_files(session, edited_file)
+    root_folder, edited_file = sdf.load_files(ROOT_FOLDER)
+    changed_files = sdf.save_files(session, edited_file, root_folder)
 
     # delete testing file
     if os.path.isfile(new_file):
@@ -114,7 +117,8 @@ def test_load_duplicate_files_loaded_files_are_in_the_list():
     session = basic_database_create()
 
     # saving the data to the database
-    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    sdf.save_files(session, files, root_folder)
 
     # loading data from database
     loaded_files = sdf.load_duplicate_files(session)
@@ -133,7 +137,8 @@ def test_load_duplicate_files_loaded_files_are_in_the_list():
 
 def test_get_duplicates_for_file_file_rqhHrL_jpeg_has_min_one_duplicate():
     session = basic_database_create()
-    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    sdf.save_files(session, files, root_folder)
     test_file = os.path.abspath('test_files/rqhHrL.jpeg')
 
     assert len(sdf.get_duplicates_for_file(session, test_file)) > 1
@@ -141,7 +146,8 @@ def test_get_duplicates_for_file_file_rqhHrL_jpeg_has_min_one_duplicate():
 
 def test_get_duplicates_for_file_file_PUmFFwcN_html_does_not_have_duplicate():
     session = basic_database_create()
-    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    sdf.save_files(session, files, root_folder)
     test_file = os.path.abspath('test_files/PUmFFwcN.html')
 
     assert len(sdf.get_duplicates_for_file(session, test_file)) == 1
@@ -149,7 +155,8 @@ def test_get_duplicates_for_file_file_PUmFFwcN_html_does_not_have_duplicate():
 
 def test_get_duplicates_for_file_file_testovaci_txt_does_not_exists():
     session = basic_database_create()
-    sdf.save_files(session, sdf.load_files(ROOT_FOLDER))
+    root_folder, files = sdf.load_files(ROOT_FOLDER)
+    sdf.save_files(session, files, root_folder)
     test_file = os.path.abspath('test_files/testovaci.txt')
 
     assert len(sdf.get_duplicates_for_file(session, test_file)) == 0
