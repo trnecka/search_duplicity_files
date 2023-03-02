@@ -1,8 +1,8 @@
 # import configure constants
 import config
 
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from sqlalchemy import Column, Integer, String, create_engine, Engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, Mapped, mapped_column
+from sqlalchemy import Column, Integer, String, create_engine, Engine, ForeignKey
 
 
 class Base(DeclarativeBase):
@@ -11,15 +11,10 @@ class Base(DeclarativeBase):
 
 class File(Base):
     __tablename__ = "file"
-    id = Column(Integer, primary_key=True)
-    filehash = Column(String(255), nullable=False)
-    filename = Column(String(1000), nullable=False)
-    parent_file_id = Column(Integer, default=0)
-
-    def __init__(self, filehash, filename, parent_file_id=0):
-        self.filehash = filehash
-        self.filename = filename
-        self.parent_file_id = parent_file_id
+    id: Mapped[int] = mapped_column(primary_key=True)
+    filehash: Mapped[str] = mapped_column(String(255), nullable=False)
+    filename: Mapped[str] = mapped_column(String(1000), nullable=False)
+    parent_file_id: Mapped[int] = mapped_column(default=0)
 
 
 def load_engine() -> Engine:
