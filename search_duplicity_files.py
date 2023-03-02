@@ -11,13 +11,13 @@ def load_files(root_folder: str) -> list:
     Loading list all files in root folder and subfolders.
 
     :param root_folder: Relative path to the folder.
-    :return: The list of the all files with absolute path.
+    :return: Tuple where is first value root folder and second value is the list of the all files with absolute path.
     """
     list_files = list()
     for (path, _, files) in os.walk(root_folder):
         for file_name in files:
             list_files.append(os.path.abspath((os.path.join(path, file_name))))
-    return list_files
+    return os.path.abspath(root_folder), list_files
 
 
 def get_hash(path_file: str) -> str:
@@ -81,15 +81,27 @@ def is_file_changed(session, file: str):
     return False
 
 
-def save_files(session, files: list) -> list:
+def save_files(session, files: list, root_folder: str) -> list:
     """
     Saving files to the database.
     Function checks the changes of the files in the database and returns these changes.
 
     :param session: The function create_session() from the file db.py
+    :param root_folder: Full path to the root folder.
     :param files: The list of the file with full paths.
     :return: List of the changed files
     """
+    saved_root_folder = session.query(db.RootFolder).filter(db.RootFolder.path == root_folder).first()
+    if saved_root_folder is None:
+        session.add(
+            db.RootFolder(
+                name=root_folder,
+                path=root_folder
+            )
+        )
+        session.commit()
+        saved_root_folder = session.query(db.RootFolder).filter(db.RootFolder.path == root_folder).first()
+
     changed_file = list()
     for file in files:
         if not file_exists(session, file):
@@ -100,7 +112,8 @@ def save_files(session, files: list) -> list:
                     db.File(
                         filehash=get_hash(file),
                         filename=file,
-                        parent_file_id=get_parent_file_id(session, file)
+                        parent_file_id=get_parent_file_id(session, file),
+                        root_folder_id=saved_root_folder.id
                     )
                 )
                 session.commit()
@@ -148,9 +161,10 @@ def search_duplicity_files():
     engine = db.load_engine()
     db.create_db_structure(engine)
     session = db.create_session(engine)
-    files = load_files("tests/test_files")
+    root_folder, files = load_files("tests/test_files")
     # print the list of the changed files
-    print(save_files(session, files))
+    print(save_files(session, files, root_folder))
+    print(f"Root folder: {root_folder}")
 
     # write all duplicate name of the files with their original (first record in the database)
     # example output
