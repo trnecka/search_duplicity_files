@@ -1,4 +1,5 @@
 import os
+import tkinter as tk
 from hashlib import md5
 
 from sqlalchemy.sql.operators import and_
@@ -180,5 +181,52 @@ def search_duplicity_files():
         print(gdff.filename)
 
 
+class SearchDuplicityFilesGUI(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.dialog_root_folder = None
+        self.title = "Testovaci aplikace"
+
+        # creating buttons frame
+        self.frame_buttons = tk.Frame(self)
+        self.frame_buttons.pack(side=tk.TOP)
+
+        # creating buttons
+        self.button_search_duplicity = tk.Button(self.frame_buttons)
+        self.button_search_duplicity["text"] = "Search duplicity files"
+        self.button_search_duplicity["width"] = 17
+        self.button_search_duplicity["pady"] = 10
+        self.button_search_duplicity.grid(row=0, column=0, padx=10, pady=10)
+
+        self.button_root_folder = tk.Button(self.frame_buttons)
+        self.button_root_folder["text"] = "Root folders"
+        self.button_root_folder["width"] = 17
+        self.button_root_folder["pady"] = 10
+        self.button_root_folder.grid(row=0, column=1, padx=10, pady=10)
+
+        self.button_changed_files = tk.Button(self.frame_buttons)
+        self.button_changed_files["text"] = "Changed files"
+        self.button_changed_files["width"] = 17
+        self.button_changed_files["pady"] = 10
+        self.button_changed_files.grid(row=0, column=2, padx=10, pady=10)
+
+        self.button_exit = tk.Button(self.frame_buttons)
+        self.button_exit["text"] = "Exit"
+        self.button_exit["width"] = 17
+        self.button_exit["pady"] = 10
+        self.button_exit["command"] = self.quit
+        self.button_exit.grid(row=0, column=3, padx=10, pady=10)
+
+        # create listbox frame
+        self.frame_listbox = tk.Frame(self)
+        self.frame_listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # creating listbox for duplicity files
+        self.listbox_list_duplicity_files = tk.Listbox(self.frame_listbox)
+        self.listbox_list_duplicity_files.pack(fill=tk.BOTH, expand=True)
+
+
 if __name__ == '__main__':
-    search_duplicity_files()
+    # search_duplicity_files()
+    window = SearchDuplicityFilesGUI()
+    window.mainloop()
