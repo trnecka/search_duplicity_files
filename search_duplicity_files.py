@@ -181,10 +181,47 @@ def search_duplicity_files():
         print(gdff.filename)
 
 
+class DialogListRootFolders(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("List root folders")
+
+        self.buttons = tk.Frame(self)
+        self.buttons.pack()
+
+        self.button_add = tk.Button(self.buttons)
+        self.button_add["text"] = "Add"
+        self.button_add["pady"] = 10
+        self.button_add["width"] = 10
+        self.button_add.grid(row=0, column=0, padx=10, pady=10)
+
+        self.button_delete = tk.Button(self.buttons)
+        self.button_delete["text"] = "Delete"
+        self.button_delete["pady"] = 10
+        self.button_delete["width"] = 10
+        self.button_delete.grid(row=0, column=1, padx=10, pady=10)
+
+        self.button_cancel = tk.Button(self.buttons)
+        self.button_cancel["text"] = "Cancel"
+        self.button_cancel["pady"] = 10
+        self.button_cancel["width"] = 10
+        self.button_cancel["command"] = self.destroy
+        self.button_cancel.grid(row=0, column=2, padx=10, pady=10)
+
+        self.label_list_root_folders = tk.Label(self)
+        self.label_list_root_folders["text"] = "List root folders:"
+        self.label_list_root_folders.pack(anchor="w", padx=5)
+
+        self.frame_list_root_folders = tk.Frame(self)
+        self.frame_list_root_folders.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
+
+        self.listbox_root_folders = tk.Listbox(self.frame_list_root_folders)
+        self.listbox_root_folders.pack(fill=tk.BOTH, expand=True)
+
+
 class SearchDuplicityFilesGUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.dialog_root_folder = None
         self.title("Search duplicity files")
 
         # creating buttons frame
@@ -202,6 +239,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_root_folder["text"] = "Root folders"
         self.button_root_folder["width"] = 17
         self.button_root_folder["pady"] = 10
+        self.button_root_folder["command"] = lambda: self.dialog_root_folder_show()
         self.button_root_folder.grid(row=0, column=1, padx=10, pady=10)
 
         self.button_changed_files = tk.Button(self.frame_buttons)
@@ -224,6 +262,10 @@ class SearchDuplicityFilesGUI(tk.Tk):
         # creating listbox for duplicity files
         self.listbox_list_duplicity_files = tk.Listbox(self.frame_listbox)
         self.listbox_list_duplicity_files.pack(fill=tk.BOTH, expand=True)
+
+    def dialog_root_folder_show(self):
+        dlg = DialogListRootFolders(self)
+        dlg.grab_set()
 
 
 if __name__ == '__main__':
