@@ -255,9 +255,13 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_exit["command"] = self.quit
         self.button_exit.grid(row=0, column=3, padx=10, pady=10)
 
+        self.label_listbox_list_duplicity_files = tk.Label(self)
+        self.label_listbox_list_duplicity_files["text"] = "List duplicity files"
+        self.label_listbox_list_duplicity_files.pack(anchor="w", padx=5)
+
         # create listbox frame
         self.frame_listbox = tk.Frame(self)
-        self.frame_listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.frame_listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # creating listbox for duplicity files
         self.listbox_list_duplicity_files = tk.Listbox(self.frame_listbox)
