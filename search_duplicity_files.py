@@ -185,7 +185,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.dialog_root_folder = None
-        self.title("Search duplicity files")
+        self.title = "Testovaci aplikace"
 
         # creating buttons frame
         self.frame_buttons = tk.Frame(self)
