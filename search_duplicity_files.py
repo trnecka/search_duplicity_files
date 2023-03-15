@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+from tkinter import ttk
 from hashlib import md5
 
 from sqlalchemy.sql.operators import and_
@@ -255,17 +256,57 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_exit["command"] = self.quit
         self.button_exit.grid(row=0, column=3, padx=10, pady=10)
 
-        self.label_listbox_list_duplicity_files = tk.Label(self)
-        self.label_listbox_list_duplicity_files["text"] = "List duplicity files"
-        self.label_listbox_list_duplicity_files.pack(anchor="w", padx=5)
-
         # create listbox frame
-        self.frame_listbox = tk.Frame(self)
-        self.frame_listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.frame_treeview = tk.Frame(self)
+        self.frame_treeview.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # creating listbox for duplicity files
-        self.listbox_list_duplicity_files = tk.Listbox(self.frame_listbox)
-        self.listbox_list_duplicity_files.pack(fill=tk.BOTH, expand=True)
+        # connect to the database
+        engine = db.load_engine()
+        session = db.create_session(engine)
+
+        # creating treeview for duplicity files
+        self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
+        self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
+        self.treeview_scroll_x = ttk.Scrollbar(
+            self.treeview_list_duplicity_files,
+            orient=tk.HORIZONTAL,
+            command=self.treeview_list_duplicity_files.xview
+            )
+        self.treeview_scroll_x.pack(side=tk.BOTTOM, fill=tk.X, expand=True)
+
+        self.treeview_scroll_y = ttk.Scrollbar(
+            self.treeview_list_duplicity_files,
+            orient=tk.VERTICAL,
+            command=self.treeview_list_duplicity_files.yview
+        )
+        self.treeview_scroll_y.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
+
+        self.treeview_list_duplicity_files.configure(
+            yscrollcommand=self.treeview_scroll_y.set,
+            xscrollcommand=self.treeview_scroll_x.set
+        )
+        for df in load_duplicate_files(session):
+            self.treeview_list_duplicity_files.insert(
+                '',
+                tk.END,
+                text=df.get('file_original').filename,
+                iid=df.get('file_original').id,
+                open=False
+            )
+            for f in df.get('file_copy'):
+                self.treeview_list_duplicity_files.insert(
+                    '',
+                    tk.END,
+                    text=f.filename,
+                    iid=f.id,
+                    open=False
+                )
+                self.treeview_list_duplicity_files.move(
+                    f.id,
+                    df.get("file_original").id,
+                    f.id
+                )
+        self.treeview_list_duplicity_files.pack(fill=tk.BOTH, expand=True)
 
     def dialog_root_folder_show(self):
         dlg = DialogListRootFolders(self)
