@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 from hashlib import md5
 
@@ -224,6 +225,8 @@ class SearchDuplicityFilesGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Search duplicity files")
+        self.font = tkfont.Font()
+        self.width = 700
 
         # creating buttons frame
         self.frame_buttons = tk.Frame(self)
@@ -269,28 +272,17 @@ class SearchDuplicityFilesGUI(tk.Tk):
         # creating treeview for duplicity files
         self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
         self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
-        self.treeview_list_duplicity_files.column("#0", minwidth=700, stretch=True)
+        self.treeview_list_duplicity_files.column("#0", minwidth=self.width, width=self.width, stretch=True)
         for df in load_duplicate_files(session):
-            self.treeview_list_duplicity_files.insert(
-                '',
-                tk.END,
-                text=df.get('file_original').filename,
-                iid=df.get('file_original').id,
-                open=False
-            )
+            self.insert_line(df.get('file_original').filename, df.get('file_original').id)
             for f in df.get('file_copy'):
-                self.treeview_list_duplicity_files.insert(
-                    '',
-                    tk.END,
-                    text=f.filename,
-                    iid=f.id,
-                    open=False
-                )
+                self.insert_line(f.filename, f.id)
                 self.treeview_list_duplicity_files.move(
                     f.id,
                     df.get("file_original").id,
                     f.id
                 )
+
         self.treeview_list_duplicity_files.grid(row=0, column=0, sticky=tk.NSEW)
 
         # creating vertical scrollbar
@@ -318,6 +310,26 @@ class SearchDuplicityFilesGUI(tk.Tk):
     def dialog_root_folder_show(self):
         dlg = DialogListRootFolders(self)
         dlg.grab_set()
+
+    def insert_line(self, new_line, id):
+        """
+        The function inserts a new line to treeview and it customizes minwidth of the treeview
+
+        :param new_line: Text of the item
+        :param id: Id of the item
+        :return: None
+        """
+        width = self.font.measure(new_line) + 40
+        if width > self.width:
+            self.treeview_list_duplicity_files.column("#0", minwidth=width)
+            self.width = width
+        self.treeview_list_duplicity_files.insert(
+            '',
+            tk.END,
+            text=new_line,
+            iid=id,
+            open=False
+        )
 
 
 if __name__ == '__main__':
