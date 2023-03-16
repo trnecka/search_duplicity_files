@@ -258,6 +258,8 @@ class SearchDuplicityFilesGUI(tk.Tk):
 
         # create listbox frame
         self.frame_treeview = tk.Frame(self)
+        self.frame_treeview.grid_columnconfigure(0, weight=1)
+        self.frame_treeview.grid_rowconfigure(0, weight=1)
         self.frame_treeview.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # connect to the database
@@ -267,24 +269,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         # creating treeview for duplicity files
         self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
         self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
-        self.treeview_scroll_x = ttk.Scrollbar(
-            self.treeview_list_duplicity_files,
-            orient=tk.HORIZONTAL,
-            command=self.treeview_list_duplicity_files.xview
-            )
-        self.treeview_scroll_x.pack(side=tk.BOTTOM, fill=tk.X, expand=True)
 
-        self.treeview_scroll_y = ttk.Scrollbar(
-            self.treeview_list_duplicity_files,
-            orient=tk.VERTICAL,
-            command=self.treeview_list_duplicity_files.yview
-        )
-        self.treeview_scroll_y.pack(side=tk.RIGHT, fill=tk.Y, expand=True)
-
-        self.treeview_list_duplicity_files.configure(
-            yscrollcommand=self.treeview_scroll_y.set,
-            xscrollcommand=self.treeview_scroll_x.set
-        )
         for df in load_duplicate_files(session):
             self.treeview_list_duplicity_files.insert(
                 '',
@@ -306,7 +291,20 @@ class SearchDuplicityFilesGUI(tk.Tk):
                     df.get("file_original").id,
                     f.id
                 )
-        self.treeview_list_duplicity_files.pack(fill=tk.BOTH, expand=True)
+        self.treeview_list_duplicity_files.grid(row=0, column=0, sticky=tk.NSEW)
+
+        # creating vertical scrollbar
+        self.scrollbar_list_duplicity_vertical = tk.Scrollbar(
+            self.frame_treeview,
+            orient=tk.VERTICAL,
+            command=self.treeview_list_duplicity_files.yview
+        )
+        self.scrollbar_list_duplicity_vertical.grid(row=0, column=1, sticky=tk.NS)
+
+        # adding scrollbars to list duplicity files (treeview)
+        self.treeview_list_duplicity_files.configure(
+            yscrollcommand=self.scrollbar_list_duplicity_vertical.set
+        )
 
     def dialog_root_folder_show(self):
         dlg = DialogListRootFolders(self)
