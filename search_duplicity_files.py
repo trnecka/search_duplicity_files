@@ -269,7 +269,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         # creating treeview for duplicity files
         self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
         self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
-
+        self.treeview_list_duplicity_files.column("#0", minwidth=700, stretch=True)
         for df in load_duplicate_files(session):
             self.treeview_list_duplicity_files.insert(
                 '',
@@ -301,9 +301,18 @@ class SearchDuplicityFilesGUI(tk.Tk):
         )
         self.scrollbar_list_duplicity_vertical.grid(row=0, column=1, sticky=tk.NS)
 
+        # creating horizontal scrollbar
+        self.scrollbar_list_duplicity_horizontal = tk.Scrollbar(
+            self.frame_treeview,
+            orient=tk.HORIZONTAL,
+            command=self.treeview_list_duplicity_files.xview
+        )
+        self.scrollbar_list_duplicity_horizontal.grid(row=1, column=0, sticky=tk.EW)
+
         # adding scrollbars to list duplicity files (treeview)
         self.treeview_list_duplicity_files.configure(
-            yscrollcommand=self.scrollbar_list_duplicity_vertical.set
+            yscrollcommand=self.scrollbar_list_duplicity_vertical.set,
+            xscrollcommand=self.scrollbar_list_duplicity_horizontal.set
         )
 
     def dialog_root_folder_show(self):
