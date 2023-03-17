@@ -2,6 +2,7 @@ import os
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
+from tkinter.filedialog import askdirectory
 from hashlib import md5
 
 from sqlalchemy.sql.operators import and_
@@ -187,23 +188,25 @@ class DialogListRootFolders(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("List root folders")
+        self.font = tkfont.Font()
+        self.width = 300
 
-        self.buttons = tk.Frame(self)
-        self.buttons.pack()
+        self.frame_buttons = tk.Frame(self)
+        self.frame_buttons.pack()
 
-        self.button_add = tk.Button(self.buttons)
+        self.button_add = tk.Button(self.frame_buttons)
         self.button_add["text"] = "Add"
         self.button_add["pady"] = 10
         self.button_add["width"] = 10
         self.button_add.grid(row=0, column=0, padx=10, pady=10)
 
-        self.button_delete = tk.Button(self.buttons)
+        self.button_delete = tk.Button(self.frame_buttons)
         self.button_delete["text"] = "Delete"
         self.button_delete["pady"] = 10
         self.button_delete["width"] = 10
         self.button_delete.grid(row=0, column=1, padx=10, pady=10)
 
-        self.button_cancel = tk.Button(self.buttons)
+        self.button_cancel = tk.Button(self.frame_buttons)
         self.button_cancel["text"] = "Cancel"
         self.button_cancel["pady"] = 10
         self.button_cancel["width"] = 10
@@ -215,10 +218,43 @@ class DialogListRootFolders(tk.Toplevel):
         self.label_list_root_folders.pack(anchor="w", padx=5)
 
         self.frame_list_root_folders = tk.Frame(self)
+        self.frame_list_root_folders.grid_rowconfigure(0, weight=1)
+        self.frame_list_root_folders.grid_columnconfigure(0, weight=1)
         self.frame_list_root_folders.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
 
+        # data for listbox root folders
+        self.root_folders_data = db_session.query(db.RootFolder).all()
+
+        # adding listbox for root folder
         self.listbox_root_folders = tk.Listbox(self.frame_list_root_folders)
-        self.listbox_root_folders.pack(fill=tk.BOTH, expand=True)
+        for rdf in self.root_folders_data:
+            self.listbox_root_folders.insert(
+                rdf.id,
+                rdf.name
+            )
+        self.listbox_root_folders.grid(row=0, column=0, sticky=tk.NSEW)
+
+        # creating vertical scrollbar
+        self.scrollbar_list_folders_vertical = tk.Scrollbar(
+            self.frame_list_root_folders,
+            orient=tk.VERTICAL,
+            command=self.listbox_root_folders.yview
+        )
+        self.scrollbar_list_folders_vertical.grid(row=0, column=1, sticky=tk.NS)
+
+        # creating horizontal scrollbar
+        self.scrollbar_list_folders_horizontal = tk.Scrollbar(
+            self.frame_list_root_folders,
+            orient=tk.HORIZONTAL,
+            command=self.listbox_root_folders.xview
+        )
+        self.scrollbar_list_folders_horizontal.grid(row=1, column=0, sticky=tk.EW)
+
+        # adding scrollbars to root folders (listbox)
+        self.listbox_root_folders.configure(
+            yscrollcommand=self.scrollbar_list_folders_vertical.set,
+            xscrollcommand=self.scrollbar_list_folders_horizontal.set
+        )
 
 
 class SearchDuplicityFilesGUI(tk.Tk):
@@ -265,15 +301,11 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.frame_treeview.grid_rowconfigure(0, weight=1)
         self.frame_treeview.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # connect to the database
-        engine = db.load_engine()
-        session = db.create_session(engine)
-
         # creating treeview for duplicity files
         self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
         self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
         self.treeview_list_duplicity_files.column("#0", minwidth=self.width, width=self.width, stretch=True)
-        for df in load_duplicate_files(session):
+        for df in load_duplicate_files(db_session):
             self.insert_line(df.get('file_original').filename, df.get('file_original').id)
             for f in df.get('file_copy'):
                 self.insert_line(f.filename, f.id)
@@ -334,5 +366,11 @@ class SearchDuplicityFilesGUI(tk.Tk):
 
 if __name__ == '__main__':
     # search_duplicity_files()
+
+    # create database session
+    global db_session
+    engine = db.load_engine()
+    db_session = db.create_session(engine)
+
     window = SearchDuplicityFilesGUI()
     window.mainloop()
