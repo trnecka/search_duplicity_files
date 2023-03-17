@@ -198,6 +198,7 @@ class DialogListRootFolders(tk.Toplevel):
         self.button_add["text"] = "Add"
         self.button_add["pady"] = 10
         self.button_add["width"] = 10
+        self.button_add["command"] = lambda: self.add_directory()
         self.button_add.grid(row=0, column=0, padx=10, pady=10)
 
         self.button_delete = tk.Button(self.frame_buttons)
@@ -255,6 +256,22 @@ class DialogListRootFolders(tk.Toplevel):
             yscrollcommand=self.scrollbar_list_folders_vertical.set,
             xscrollcommand=self.scrollbar_list_folders_horizontal.set
         )
+
+    def add_directory(self):
+        """
+        The path from the askdirectory form will add to the database
+        and root folders listbox after the check existence folder.
+
+        :return: None
+        """
+        folder_name = askdirectory(initialdir=os.getcwd(), parent=self)
+        if not bool(db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_name).first()):
+            self.listbox_root_folders.insert(tk.END, folder_name)
+            db_session.add(db.RootFolder(
+                name=folder_name,
+                path=folder_name
+            ))
+            db_session.commit()
 
 
 class SearchDuplicityFilesGUI(tk.Tk):
