@@ -205,6 +205,7 @@ class DialogListRootFolders(tk.Toplevel):
         self.button_delete["text"] = "Delete"
         self.button_delete["pady"] = 10
         self.button_delete["width"] = 10
+        self.button_delete["command"] = lambda: self.delete_directory()
         self.button_delete.grid(row=0, column=1, padx=10, pady=10)
 
         self.button_cancel = tk.Button(self.frame_buttons)
@@ -224,15 +225,23 @@ class DialogListRootFolders(tk.Toplevel):
         self.frame_list_root_folders.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
 
         # data for listbox root folders
-        self.root_folders_data = db_session.query(db.RootFolder).all()
+        root_folders_data = db_session.query(db.RootFolder).all()
 
         # adding listbox for root folder
         self.listbox_root_folders = tk.Listbox(self.frame_list_root_folders)
-        for rdf in self.root_folders_data:
+
+        # primary keys for the root folders
+        self.root_folders_pk = dict()
+
+        # inserting data to root folder listbox
+        index = 0
+        for rfd in root_folders_data:
             self.listbox_root_folders.insert(
-                rdf.id,
-                rdf.name
+                tk.END,
+                rfd.name
             )
+            self.root_folders_pk[index] = rfd.id
+            index += 1
         self.listbox_root_folders.grid(row=0, column=0, sticky=tk.NSEW)
 
         # creating vertical scrollbar
@@ -264,13 +273,23 @@ class DialogListRootFolders(tk.Toplevel):
 
         :return: None
         """
-        folder_name = askdirectory(initialdir=os.getcwd(), parent=self)
-        if not bool(db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_name).first()):
-            self.listbox_root_folders.insert(tk.END, folder_name)
+        folder_path = askdirectory(initialdir=os.getcwd(), parent=self)
+        if not bool(db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_path).first()):
             db_session.add(db.RootFolder(
-                name=folder_name,
-                path=folder_name
+                name=folder_path,
+                path=folder_path
             ))
+            db_session.commit()
+            new_root_folder = db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_path).first()
+            self.listbox_root_folders.insert(new_root_folder.id, folder_path)
+
+    def delete_directory(self):
+        if listbox_item := self.listbox_root_folders.curselection():
+            listbox_index = listbox_item[0]
+            self.listbox_root_folders.delete(listbox_index)
+            pk = self.root_folders_pk.get(listbox_index)
+            item = db_session.query(db.RootFolder).filter(db.RootFolder.id == pk).one()
+            db_session.delete(item)
             db_session.commit()
 
 
@@ -387,6 +406,7 @@ if __name__ == '__main__':
     # create database session
     global db_session
     engine = db.load_engine()
+    db.create_db_structure(engine)
     db_session = db.create_session(engine)
 
     window = SearchDuplicityFilesGUI()
