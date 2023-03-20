@@ -266,7 +266,7 @@ class DialogListRootFolders(tk.Toplevel):
             xscrollcommand=self.scrollbar_list_folders_horizontal.set
         )
 
-    def add_directory(self):
+    def add_directory(self) -> None:
         """
         The path from the askdirectory form will add to the database
         and root folders listbox after the check existence folder.
@@ -274,23 +274,57 @@ class DialogListRootFolders(tk.Toplevel):
         :return: None
         """
         folder_path = askdirectory(initialdir=os.getcwd(), parent=self)
+
         if not bool(db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_path).first()):
             db_session.add(db.RootFolder(
                 name=folder_path,
                 path=folder_path
             ))
             db_session.commit()
-            new_root_folder = db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_path).first()
-            self.listbox_root_folders.insert(new_root_folder.id, folder_path)
+            self.listbox_root_folders.insert(tk.END, folder_path)
 
-    def delete_directory(self):
+            # update primary keys for listbox
+            self.root_folders_pk_update()
+
+    def delete_directory(self) -> None:
+        """
+        Delete directory from the list box folders
+
+        :return: None
+        """
         if listbox_item := self.listbox_root_folders.curselection():
             listbox_index = listbox_item[0]
             self.listbox_root_folders.delete(listbox_index)
             pk = self.root_folders_pk.get(listbox_index)
+
+            # delete item from database
             item = db_session.query(db.RootFolder).filter(db.RootFolder.id == pk).one()
             db_session.delete(item)
             db_session.commit()
+
+            # delete item from listbox
+            self.root_folders_pk.pop(listbox_index)
+
+            # update primary keys for listbox
+            self.root_folders_pk_update()
+
+    def root_folders_pk_update(self) -> None:
+        """
+        Update attribute root_folders_pk.
+
+        :return: None
+        """
+        # data for listbox root folders
+        root_folders_data = db_session.query(db.RootFolder).all()
+
+        # restart primary keys for the root folders
+        self.root_folders_pk = dict()
+
+        # inserting data to root_folders_pk attribute
+        index = 0
+        for rfd in root_folders_data:
+            self.root_folders_pk[index] = rfd.id
+            index += 1
 
 
 class SearchDuplicityFilesGUI(tk.Tk):
