@@ -3,6 +3,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 from tkinter.filedialog import askdirectory
+from tkinter import messagebox
 from hashlib import md5
 
 from sqlalchemy.sql.operators import and_
@@ -274,17 +275,75 @@ class DialogListRootFolders(tk.Toplevel):
         :return: None
         """
         folder_path = askdirectory(initialdir=os.getcwd(), parent=self)
+        if folder_path != '':
+            list_all_paths = db_session.query(db.RootFolder).all()
+            folder_exist = False
+            for lap in list_all_paths:
+                if folder_path == lap.path:
+                    # info about the existence of the folder (messagebox) and do not add new folder
+                    messagebox.showinfo(
+                        "Add a new root folder",
+                        f"The folder\n{folder_path}\nalready exists and it will not add to the list root folders."
+                    )
+                    folder_exist = True
+                    break
+                elif lap.path in folder_path:
+                    # info about the existence of the parent folder (messagebox) and do not add new folder
+                    messagebox.showinfo(
+                        "Add a new root folder",
+                        f"The folder\n{folder_path}\nalready exists in the parent folder and it will not add to the list root folder."
+                    )
+                    folder_exist = True
+                    break
+                elif folder_path in lap.path:
+                    # add new folder if the user confirms it and to delete the child folder
+                    insert_folder = messagebox.askyesno(
+                        "Add a new root folder",
+                        f"This folder has the sub folder in root folders.\n"
+                        f"Do you want to delete all sub folders and insert your root folder?"
+                    )
+                    if insert_folder:
+                        origin_folders = db_session.query(db.RootFolder).filter(db.RootFolder.path.like(folder_path+"%")).all()
+                        for of in origin_folders:
+                            origin_folder = db_session.query(db.RootFolder).filter(db.RootFolder.path == of.path).one()
+                            db_session.delete(origin_folder)
+                            db_session.commit()
 
-        if not bool(db_session.query(db.RootFolder).filter(db.RootFolder.path == folder_path).first()):
-            db_session.add(db.RootFolder(
-                name=folder_path,
-                path=folder_path
-            ))
-            db_session.commit()
-            self.listbox_root_folders.insert(tk.END, folder_path)
+                        # refresh listbox for list root folders
+                        # delete listbox data
+                        self.listbox_root_folders.delete(0, tk.END)
+                        # get data for listbox from database
+                        list_root_folders = db_session.query(db.RootFolder).all()
+                        # delete primary keys for listbox
+                        self.root_folders_pk = dict()
+                        # generate new listbox for root folders and primary keys
+                        index = 0
+                        for lrf in list_root_folders:
+                            self.listbox_root_folders.insert(
+                                index,
+                                lrf.name
+                            )
+                            self.root_folders_pk[index] = lrf.id
+                            index += 1
 
-            # update primary keys for listbox
-            self.root_folders_pk_update()
+                        folder_exist = False
+                    else:
+                        folder_exist = True
+                    break
+                else:
+                    folder_exist = False
+
+            # adding a new root folder if not exists
+            if not folder_exist:
+                db_session.add(db.RootFolder(
+                    name=folder_path,
+                    path=folder_path
+                ))
+                db_session.commit()
+                self.listbox_root_folders.insert(tk.END, folder_path)
+
+                # update primary keys for listbox
+                self.root_folders_pk_update()
 
     def delete_directory(self) -> None:
         """
