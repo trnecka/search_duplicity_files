@@ -33,8 +33,7 @@ class RootFolder(Base):
     files = relationship(
         "File",
         back_populates="root_folder",
-        cascade="all, delete",
-        passive_deletes=True
+        cascade="all, delete"
     )
 
 

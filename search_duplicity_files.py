@@ -191,6 +191,7 @@ class DialogListRootFolders(tk.Toplevel):
         self.title("List root folders")
         self.font = tkfont.Font()
         self.width = 300
+        self.parent = parent
 
         self.frame_buttons = tk.Frame(self)
         self.frame_buttons.pack()
@@ -210,10 +211,10 @@ class DialogListRootFolders(tk.Toplevel):
         self.button_delete.grid(row=0, column=1, padx=10, pady=10)
 
         self.button_cancel = tk.Button(self.frame_buttons)
-        self.button_cancel["text"] = "Cancel"
+        self.button_cancel["text"] = "Restore list files"
         self.button_cancel["pady"] = 10
         self.button_cancel["width"] = 10
-        self.button_cancel["command"] = self.destroy
+        self.button_cancel["command"] = self.restore_list_files
         self.button_cancel.grid(row=0, column=2, padx=10, pady=10)
 
         self.label_list_root_folders = tk.Label(self)
@@ -385,6 +386,19 @@ class DialogListRootFolders(tk.Toplevel):
             self.root_folders_pk[index] = rfd.id
             index += 1
 
+    def restore_list_files(self) -> None:
+        """
+        Restoring searched files.
+
+        :return: None
+        """
+        list_folders = db_session.query(db.RootFolder).all()
+        for lf in list_folders:
+            root_folders, files = load_files(lf.path)
+            save_files(db_session, files, root_folders)
+        self.parent.update_list_duplicate_files()
+        self.destroy()
+
 
 class SearchDuplicityFilesGUI(tk.Tk):
     def __init__(self):
@@ -402,6 +416,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_search_duplicity["text"] = "Search duplicity files"
         self.button_search_duplicity["width"] = 17
         self.button_search_duplicity["pady"] = 10
+        self.button_search_duplicity["command"] = lambda: self.update_list_duplicate_files()
         self.button_search_duplicity.grid(row=0, column=0, padx=10, pady=10)
 
         self.button_root_folder = tk.Button(self.frame_buttons)
@@ -434,15 +449,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
         self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
         self.treeview_list_duplicity_files.column("#0", minwidth=self.width, width=self.width, stretch=True)
-        for df in load_duplicate_files(db_session):
-            self.insert_line(df.get('file_original').filename, df.get('file_original').id)
-            for f in df.get('file_copy'):
-                self.insert_line(f.filename, f.id)
-                self.treeview_list_duplicity_files.move(
-                    f.id,
-                    df.get("file_original").id,
-                    f.id
-                )
+        self.update_list_duplicate_files()
 
         self.treeview_list_duplicity_files.grid(row=0, column=0, sticky=tk.NSEW)
 
@@ -491,6 +498,23 @@ class SearchDuplicityFilesGUI(tk.Tk):
             iid=id,
             open=False
         )
+
+    def update_list_duplicate_files(self) -> None:
+        """
+        Updating the treeview of the list duplicate files
+
+        :return: None
+        """
+        self.treeview_list_duplicity_files.delete(*self.treeview_list_duplicity_files.get_children())
+        for df in load_duplicate_files(db_session):
+            self.insert_line(df.get('file_original').filename, df.get('file_original').id)
+            for f in df.get('file_copy'):
+                self.insert_line(f.filename, f.id)
+                self.treeview_list_duplicity_files.move(
+                    f.id,
+                    df.get("file_original").id,
+                    f.id
+                )
 
 
 if __name__ == '__main__':
