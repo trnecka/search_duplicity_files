@@ -6,6 +6,7 @@ from tkinter.filedialog import askdirectory
 from tkinter import messagebox
 from hashlib import md5
 
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.operators import and_
 
 import db
@@ -125,6 +126,22 @@ def save_files(session, files: list, root_folder: str) -> list:
     return changed_file
 
 
+def check_changed_file(session: Session) -> list:
+    """
+    The function checks if the files exist in the database.
+
+    :param session: The function create_session() from the file db.py
+    :return: List of the changed files
+    """
+    # load all files from the database
+    files = session.query(db.File).all()
+    changed_files = list()
+    for file in files:
+        if not get_hash(file.filename) == file.filehash:
+            changed_files.append(file.filename)
+    return changed_files
+
+
 def load_duplicate_files(session):
     """
     Loading duplicate files. It finds original file and their copies.
@@ -183,6 +200,78 @@ def search_duplicity_files():
     print(f'Duplicates for file "{os.path.abspath("tests/test_files/pes-seznamka-1.jpg")}"')
     for gdff in get_duplicates_for_file(session, os.path.abspath("tests/test_files/pes-seznamka-1.jpg")):
         print(gdff.filename)
+
+
+class DialogListChangedFiles(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("List changed files")
+        self.parent = parent
+        self.list_changed_files = check_changed_file(db_session)
+
+        # frame buttons
+        self.frame_buttons = tk.Frame(self)
+        self.frame_buttons.pack()
+
+        # buttons
+        self.button_add_changed_files = tk.Button(self.frame_buttons)
+        self.button_add_changed_files["text"] = "Add changed files"
+        self.button_add_changed_files["padx"] = 10
+        self.button_add_changed_files["pady"] = 10
+        self.button_add_changed_files.grid(row=0, column=0, padx=10, pady=10)
+
+        self.button_cancel = tk.Button(self.frame_buttons)
+        self.button_cancel["text"] = "Cancel"
+        self.button_cancel["padx"] = 10
+        self.button_cancel["pady"] = 10
+        self.button_cancel["command"] = self.destroy
+        self.button_cancel.grid(row=0, column=1, padx=10, pady=10)
+
+        # frame listbox
+        self.frame_list_changed_files = tk.Frame(self)
+        self.frame_list_changed_files.pack()
+
+        # label for the list changed files
+        self.label_list_changed_files = tk.Label(self)
+        self.label_list_changed_files["text"] = "List changed files:"
+        self.label_list_changed_files.pack(anchor="w", padx=5)
+
+        # frame for the list changed files
+        self.frame_list_changed_files = tk.Frame(self)
+        self.frame_list_changed_files.grid_rowconfigure(0, weight=1)
+        self.frame_list_changed_files.grid_columnconfigure(0, weight=1)
+        self.frame_list_changed_files.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
+
+        # listbox for the list changed files
+        self.listbox_list_changed_files = tk.Listbox(self.frame_list_changed_files)
+        for file in self.list_changed_files:
+            self.listbox_list_changed_files.insert(
+                tk.END,
+                file
+            )
+        self.listbox_list_changed_files.grid(row=0, column=0, sticky=tk.NSEW)
+
+        # creating vertical scrollbar
+        self.scrollbar_list_changed_files_vertical = tk.Scrollbar(
+            self.frame_list_changed_files,
+            orient=tk.VERTICAL,
+            command=self.listbox_list_changed_files.yview
+        )
+        self.scrollbar_list_changed_files_vertical.grid(row=0, column=1, sticky=tk.NS)
+
+        # creating horizontal scrollbar
+        self.scrollbar_list_changed_files_horizontal = tk.Scrollbar(
+            self.frame_list_changed_files,
+            orient=tk.HORIZONTAL,
+            command=self.listbox_list_changed_files.xview
+        )
+        self.scrollbar_list_changed_files_horizontal.grid(row=1, column=0, sticky=tk.EW)
+
+        # adding scrollbars to list changed files (listbox)
+        self.listbox_list_changed_files.configure(
+            yscrollcommand=self.scrollbar_list_changed_files_vertical.set,
+            xscrollcommand=self.scrollbar_list_changed_files_horizontal.set
+        )
 
 
 class DialogListRootFolders(tk.Toplevel):
@@ -430,6 +519,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_changed_files["text"] = "Changed files"
         self.button_changed_files["width"] = 17
         self.button_changed_files["pady"] = 10
+        self.button_changed_files["command"] = lambda: self.dialog_changed_files_show()
         self.button_changed_files.grid(row=0, column=2, padx=10, pady=10)
 
         self.button_exit = tk.Button(self.frame_buttons)
@@ -515,6 +605,15 @@ class SearchDuplicityFilesGUI(tk.Tk):
                     df.get("file_original").id,
                     f.id
                 )
+
+    def dialog_changed_files_show(self) -> None:
+        """
+        Show dialog changed files
+
+        :return: None
+        """
+        dlg = DialogListChangedFiles(self)
+        dlg.grab_set()
 
 
 if __name__ == '__main__':
