@@ -87,15 +87,13 @@ def is_file_changed(session, file: str):
     return False
 
 
-def save_files(session, files: list, root_folder: str) -> list:
+def save_files(session, root_folder: str) -> None:
     """
-    Saving files to the database.
-    Function checks the changes of the files in the database and returns these changes.
+    Saving files to the database if the files do not exist in the database.
+    Saving the root folder to the database if it does not exist.
 
     :param session: The function create_session() from the file db.py
     :param root_folder: Full path to the root folder.
-    :param files: The list of the file with full paths.
-    :return: List of the changed files
     """
     saved_root_folder = session.query(db.RootFolder).filter(db.RootFolder.path == root_folder).first()
     if saved_root_folder is None:
@@ -108,22 +106,18 @@ def save_files(session, files: list, root_folder: str) -> list:
         session.commit()
         saved_root_folder = session.query(db.RootFolder).filter(db.RootFolder.path == root_folder).first()
 
-    changed_file = list()
+    root_folder, files = load_files(root_folder)
     for file in files:
         if not file_exists(session, file):
-            if chf := is_file_changed(session, file):
-                changed_file.append(chf)
-            else:
-                session.add(
-                    db.File(
-                        filehash=get_hash(file),
-                        filename=file,
-                        parent_file_id=get_parent_file_id(session, file),
-                        root_folder_id=saved_root_folder.id
-                    )
+            session.add(
+                db.File(
+                    filehash=get_hash(file),
+                    filename=file,
+                    parent_file_id=get_parent_file_id(session, file),
+                    root_folder_id=saved_root_folder.id
                 )
-                session.commit()
-    return changed_file
+            )
+            session.commit()
 
 
 def check_changed_file(session: Session) -> list:
@@ -483,8 +477,7 @@ class DialogListRootFolders(tk.Toplevel):
         """
         list_folders = db_session.query(db.RootFolder).all()
         for lf in list_folders:
-            root_folders, files = load_files(lf.path)
-            save_files(db_session, files, root_folders)
+            save_files(db_session, lf.path)
         self.parent.update_list_duplicate_files()
         self.destroy()
 
