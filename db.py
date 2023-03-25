@@ -13,11 +13,11 @@ class Base(DeclarativeBase):
 
 class File(Base):
     __tablename__ = "file"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    filehash: Mapped[str] = mapped_column(String(255), nullable=False)
-    filename: Mapped[str] = mapped_column(String(1000), nullable=False)
-    parent_file_id: Mapped[int] = mapped_column(default=0)
-    root_folder_id: Mapped[int] = mapped_column(Integer, ForeignKey("root_folder.id", ondelete='CASCADE'))
+    id: Mapped[int] = mapped_column(primary_key=True, comment="ID of the file record")
+    filehash: Mapped[str] = mapped_column(String(255), nullable=False, comment="Hash string of the file.")
+    filename: Mapped[str] = mapped_column(String(1000), nullable=False, comment="Full path to the file.")
+    parent_file_id: Mapped[int] = mapped_column(default=0, comment="ID of the parent file from this table. Zero is the first founded file.")
+    root_folder_id: Mapped[int] = mapped_column(Integer, ForeignKey("root_folder.id", ondelete='CASCADE'), comment="Folder for searching duplicate files.")
     root_folder = relationship(
         "RootFolder",
         back_populates="files"
@@ -27,9 +27,9 @@ class File(Base):
 class RootFolder(Base):
     __tablename__ = "root_folder"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    path: Mapped[str] = mapped_column(String(1000), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, comment="ID of the folder record")
+    name: Mapped[str] = mapped_column(String(50), nullable=False, comment="Custom name of the folder")
+    path: Mapped[str] = mapped_column(String(1000), nullable=False, comment="Full path to the folder")
     files = relationship(
         "File",
         back_populates="root_folder",
