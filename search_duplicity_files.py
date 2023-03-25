@@ -33,8 +33,11 @@ def get_hash(path_file: str) -> str:
     :param path_file: Full path to the file.
     :return: Hash from the file
     """
-    with open(path_file, "rb") as file:
-        hash_file = md5(file.read()).hexdigest()
+    if os.path.exists(path_file):
+        with open(path_file, "rb") as file:
+            hash_file = md5(file.read()).hexdigest()
+    else:
+        hash_file = None
     return hash_file
 
 
@@ -122,7 +125,8 @@ def save_files(session, root_folder: str) -> None:
 
 def check_changed_file(session: Session) -> list:
     """
-    The function checks if the files exist in the database.
+    The function checks if the files exist in the database and the file exists on the disk.
+    The deleted files are detected as changed files.
 
     :param session: The function create_session() from the file db.py
     :return: List of the changed files
@@ -133,7 +137,26 @@ def check_changed_file(session: Session) -> list:
     for file in files:
         if not get_hash(file.filename) == file.filehash:
             changed_files.append(file.filename)
+
     return changed_files
+
+
+def save_changed_filed(session: Session, list_files: list) -> None:
+    """
+    Save changed files in filesystem. They are the deleted files and changed files.
+    These changes are detected of the function check_changed_files()
+
+    :param session: The function create_session() from the file db.py
+    :param list_files: The list of the changed files.
+    :return:
+    """
+    for file in list_files:
+        file_from_db = session.query(db.File).filter(db.File.filename == file).one()
+        if not os.path.exists(file_from_db.filename):
+            session.delete(file_from_db)
+        else:
+            session.query(db.File).filter(db.File.filename == file).update({'filehash': get_hash(file)})
+        session.commit()
 
 
 def load_duplicate_files(session):
@@ -212,6 +235,7 @@ class DialogListChangedFiles(tk.Toplevel):
         self.button_add_changed_files["text"] = "Add changed files"
         self.button_add_changed_files["padx"] = 10
         self.button_add_changed_files["pady"] = 10
+        self.button_add_changed_files["command"] = lambda: self.add_changed_files()
         self.button_add_changed_files.grid(row=0, column=0, padx=10, pady=10)
 
         self.button_cancel = tk.Button(self.frame_buttons)
@@ -266,6 +290,12 @@ class DialogListChangedFiles(tk.Toplevel):
             yscrollcommand=self.scrollbar_list_changed_files_vertical.set,
             xscrollcommand=self.scrollbar_list_changed_files_horizontal.set
         )
+
+    def add_changed_files(self):
+        list_changed_file = check_changed_file(db_session)
+        save_changed_filed(db_session, list_changed_file)
+        self.parent.update_list_duplicate_files()
+        self.destroy()
 
 
 class DialogListRootFolders(tk.Toplevel):
