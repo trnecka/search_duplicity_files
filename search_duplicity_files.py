@@ -220,7 +220,14 @@ def search_duplicity_files():
 
 
 class DialogListChangedFiles(tk.Toplevel):
+    """
+    The dialog window for the list changed files.
+    """
     def __init__(self, parent) -> None:
+        """
+        Extend class tkinter.Toplevel
+        :param parent:
+        """
         super().__init__(parent)
         self.title("List changed files")
         self.parent = parent
@@ -299,7 +306,14 @@ class DialogListChangedFiles(tk.Toplevel):
 
 
 class DialogListRootFolders(tk.Toplevel):
+    """
+    The dialog window for the list mapped folders (called root folders)
+    """
     def __init__(self, parent) -> None:
+        """
+        Extend class tkinter.Toplevel
+        :param parent:
+        """
         super().__init__(parent)
         self.title("List root folders")
         self.font = tkfont.Font()
@@ -513,7 +527,13 @@ class DialogListRootFolders(tk.Toplevel):
 
 
 class SearchDuplicityFilesGUI(tk.Tk):
+    """
+    Main window of the application
+    """
     def __init__(self) -> None:
+        """
+        Extend class tkinter.Tk
+        """
         super().__init__()
         self.title("Search duplicity files")
         self.font = tkfont.Font()
