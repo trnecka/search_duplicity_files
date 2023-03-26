@@ -123,7 +123,7 @@ def save_files(session, root_folder: str) -> None:
             session.commit()
 
 
-def check_changed_file(session: Session) -> list:
+def check_changed_files(session: Session) -> list:
     """
     The function checks if the files exist in the database and the file exists on the disk.
     The deleted files are detected as changed files.
@@ -224,7 +224,7 @@ class DialogListChangedFiles(tk.Toplevel):
         super().__init__(parent)
         self.title("List changed files")
         self.parent = parent
-        self.list_changed_files = check_changed_file(db_session)
+        self.list_changed_files = check_changed_files(db_session)
 
         # frame buttons
         self.frame_buttons = tk.Frame(self)
@@ -292,7 +292,7 @@ class DialogListChangedFiles(tk.Toplevel):
         )
 
     def add_changed_files(self):
-        list_changed_file = check_changed_file(db_session)
+        list_changed_file = check_changed_files(db_session)
         save_changed_filed(db_session, list_changed_file)
         self.parent.update_list_duplicate_files()
         self.destroy()
