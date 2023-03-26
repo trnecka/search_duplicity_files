@@ -7,16 +7,34 @@ from sqlalchemy.orm import Session
 
 
 class Base(DeclarativeBase):
+    """
+    Base class for declarative class definition.
+    """
     pass
 
 
 class File(Base):
+    """
+    Class represents the list of the mapped files in the database.
+    """
+
     __tablename__ = "file"
+
     id: Mapped[int] = mapped_column(primary_key=True, comment="ID of the file record")
+    """ ID of the record in the database table """
+
     filehash: Mapped[str] = mapped_column(String(255), nullable=False, comment="Hash string of the file.")
+    """ The hash of the file """
+
     filename: Mapped[str] = mapped_column(String(1000), nullable=False, comment="Full path to the file.")
+    """ The name of the file """
+
     parent_file_id: Mapped[int] = mapped_column(default=0, comment="ID of the parent file from this table. Zero is the first founded file.")
+    """ ID of the first file found or 0 if the file is the fist found """
+
     root_folder_id: Mapped[int] = mapped_column(Integer, ForeignKey("root_folder.id", ondelete='CASCADE'), comment="Folder for searching duplicate files.")
+    """ ID mapped folder """
+
     root_folder = relationship(
         "RootFolder",
         back_populates="files"
@@ -24,11 +42,21 @@ class File(Base):
 
 
 class RootFolder(Base):
+    """
+    Class represents mapped folder. This so-called root folder can contain another sub-folders.
+    """
+
     __tablename__ = "root_folder"
 
     id: Mapped[int] = mapped_column(primary_key=True, comment="ID of the folder record")
+    """ ID of the record in the database table """
+
     name: Mapped[str] = mapped_column(String(50), nullable=False, comment="Custom name of the folder")
+    """ Custom name for the folder """
+
     path: Mapped[str] = mapped_column(String(1000), nullable=False, comment="Full path to the folder")
+    """ The full path to the folder """
+
     files = relationship(
         "File",
         back_populates="root_folder",
