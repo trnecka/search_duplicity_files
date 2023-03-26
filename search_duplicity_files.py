@@ -10,9 +10,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.operators import and_
 
 import db
+import typing as t
 
 
-def load_files(root_folder: str) -> list:
+def load_files(root_folder: str) -> t.Tuple[str, t.List[str]]:
     """
     Loading list all files in root folder and subfolders.
 
@@ -41,7 +42,7 @@ def get_hash(path_file: str) -> str:
     return hash_file
 
 
-def get_parent_file_id(session, file: str) -> int:
+def get_parent_file_id(session: Session, file: str) -> int:
     """
     The function returns id of this file.
 
@@ -58,7 +59,7 @@ def get_parent_file_id(session, file: str) -> int:
         return 0
 
 
-def file_exists(session, file: str) -> bool:
+def file_exists(session: Session, file: str) -> bool:
     """
     Check if the file exists in database. File has to have the same hash and filename.
 
@@ -71,14 +72,14 @@ def file_exists(session, file: str) -> bool:
     ).first())
 
 
-def is_file_changed(session, file: str):
+def is_file_changed(session: Session, file: str) -> bool:
     """
     The function check if the file is the same as the file saved in the database.
     The file has the same path (like in the database) but it has different content.
 
     :param session: The function create_session() from the file db.py
     :param file: Full path to the file.
-    :return: Full path to the file which it is different in the database.
+    :return: True if the file is different in the database else False.
     """
     input_file_hash = get_hash(file)
     database_file = session.query(db.File).filter(
@@ -86,11 +87,11 @@ def is_file_changed(session, file: str):
     ).first()
     if database_file is not None:
         if input_file_hash != database_file.filehash:
-            return database_file.filename
+            return True
     return False
 
 
-def save_files(session, root_folder: str) -> None:
+def save_files(session: Session, root_folder: str) -> None:
     """
     Saving files to the database if the files do not exist in the database.
     Saving the root folder to the database if it does not exist.
@@ -123,7 +124,7 @@ def save_files(session, root_folder: str) -> None:
             session.commit()
 
 
-def check_changed_files(session: Session) -> list:
+def check_changed_files(session: Session) -> t.List[str]:
     """
     The function checks if the files exist in the database and the file exists on the disk.
     The deleted files are detected as changed files.
@@ -141,14 +142,13 @@ def check_changed_files(session: Session) -> list:
     return changed_files
 
 
-def save_changed_files(session: Session, list_files: list) -> None:
+def save_changed_files(session: Session, list_files: t.List[str]) -> None:
     """
     Save changed files in filesystem. They are the deleted files and changed files.
     These changes are detected of the function check_changed_files()
 
     :param session: The function create_session() from the file db.py
     :param list_files: The list of the changed files.
-    :return:
     """
     for file in list_files:
         file_from_db = session.query(db.File).filter(db.File.filename == file).one()
@@ -159,7 +159,7 @@ def save_changed_files(session: Session, list_files: list) -> None:
         session.commit()
 
 
-def load_duplicate_files(session):
+def load_duplicate_files(session: Session) -> t.List[t.Dict[db.File, t.List[db.File]]]:
     """
     Loading duplicate files. It finds original file and their copies.
     It returns only files which has some duplicate.
@@ -180,7 +180,7 @@ def load_duplicate_files(session):
     return duplicate_files
 
 
-def get_duplicates_for_file(session, file: str) -> list:
+def get_duplicates_for_file(session: Session, file: str) -> t.List[db.File]:
     """
     Function gets all duplicates by full path to file
 
@@ -220,7 +220,7 @@ def search_duplicity_files():
 
 
 class DialogListChangedFiles(tk.Toplevel):
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         super().__init__(parent)
         self.title("List changed files")
         self.parent = parent
@@ -291,7 +291,7 @@ class DialogListChangedFiles(tk.Toplevel):
             xscrollcommand=self.scrollbar_list_changed_files_horizontal.set
         )
 
-    def add_changed_files(self):
+    def add_changed_files(self) -> None:
         list_changed_file = check_changed_files(db_session)
         save_changed_files(db_session, list_changed_file)
         self.parent.update_list_duplicate_files()
@@ -299,7 +299,7 @@ class DialogListChangedFiles(tk.Toplevel):
 
 
 class DialogListRootFolders(tk.Toplevel):
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         super().__init__(parent)
         self.title("List root folders")
         self.font = tkfont.Font()
@@ -513,7 +513,7 @@ class DialogListRootFolders(tk.Toplevel):
 
 
 class SearchDuplicityFilesGUI(tk.Tk):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.title("Search duplicity files")
         self.font = tkfont.Font()
@@ -588,17 +588,16 @@ class SearchDuplicityFilesGUI(tk.Tk):
             xscrollcommand=self.scrollbar_list_duplicity_horizontal.set
         )
 
-    def dialog_root_folder_show(self):
+    def dialog_root_folder_show(self) -> None:
         dlg = DialogListRootFolders(self)
         dlg.grab_set()
 
-    def insert_line(self, new_line, id):
+    def insert_line(self, new_line: str, id: int) -> None:
         """
-        The function inserts a new line to treeview and it customizes minwidth of the treeview
+        The function inserts a new line to treeview and it customizes min-width of the treeview
 
         :param new_line: Text of the item
-        :param id: Id of the item
-        :return: None
+        :param id: ID of the item
         """
         width = self.font.measure(new_line) + 40
         if width > self.width:
@@ -615,8 +614,6 @@ class SearchDuplicityFilesGUI(tk.Tk):
     def update_list_duplicate_files(self) -> None:
         """
         Updating the treeview of the list duplicate files
-
-        :return: None
         """
         self.treeview_list_duplicity_files.delete(*self.treeview_list_duplicity_files.get_children())
         for df in load_duplicate_files(db_session):
@@ -632,8 +629,6 @@ class SearchDuplicityFilesGUI(tk.Tk):
     def dialog_changed_files_show(self) -> None:
         """
         Show dialog changed files
-
-        :return: None
         """
         dlg = DialogListChangedFiles(self)
         dlg.grab_set()

@@ -1,10 +1,9 @@
 # import configure constants
-from typing import List
-
 import config
 
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Mapped, mapped_column, relationship
-from sqlalchemy import Column, Integer, String, create_engine, Engine, ForeignKey
+from sqlalchemy import Integer, String, create_engine, Engine, ForeignKey
+from sqlalchemy.orm import Session
 
 
 class Base(DeclarativeBase):
@@ -55,12 +54,12 @@ def create_db_structure(engine: Engine) -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def create_session(engine: Engine):
+def create_session(engine: Engine) -> Session:
     """
     Creating configurable Session factory
 
     :param engine: sqlalchemy.engine.base.Engine
-    :return:
+    :return: Database session of sessionmaker() function
     """
     Session = sessionmaker(bind=engine)
     return Session()
