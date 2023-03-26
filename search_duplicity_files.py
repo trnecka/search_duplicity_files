@@ -141,7 +141,7 @@ def check_changed_files(session: Session) -> list:
     return changed_files
 
 
-def save_changed_filed(session: Session, list_files: list) -> None:
+def save_changed_files(session: Session, list_files: list) -> None:
     """
     Save changed files in filesystem. They are the deleted files and changed files.
     These changes are detected of the function check_changed_files()
@@ -293,7 +293,7 @@ class DialogListChangedFiles(tk.Toplevel):
 
     def add_changed_files(self):
         list_changed_file = check_changed_files(db_session)
-        save_changed_filed(db_session, list_changed_file)
+        save_changed_files(db_session, list_changed_file)
         self.parent.update_list_duplicate_files()
         self.destroy()
 
