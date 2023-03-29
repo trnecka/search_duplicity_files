@@ -3,8 +3,8 @@ import sys
 import pytest
 
 sys.path.append('../')
-import search_duplicity_files as sdf
-import db
+import core.sdfcore as sdf
+from core import db
 
 # constants for testing
 # represents full path to subfolder folder (test_files)
