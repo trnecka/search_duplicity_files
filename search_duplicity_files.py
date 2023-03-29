@@ -578,6 +578,11 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.button_exit["command"] = self.quit
         self.button_exit.grid(row=0, column=3, padx=10, pady=10)
 
+        # create label for list duplicity files
+        self.label_list_duplicity_files = tk.Label(self)
+        self.label_list_duplicity_files["text"] = "List duplicity files:"
+        self.label_list_duplicity_files.pack(anchor="w", padx=5)
+
         # create listbox frame
         self.frame_treeview = tk.Frame(self)
         self.frame_treeview.grid_columnconfigure(0, weight=1)
@@ -585,9 +590,7 @@ class SearchDuplicityFilesGUI(tk.Tk):
         self.frame_treeview.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # creating treeview for duplicity files
-        self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview)
-        self.treeview_list_duplicity_files.heading("#0", text="List duplicity files")
-        self.treeview_list_duplicity_files.column("#0", minwidth=self.width, width=self.width, stretch=True)
+        self.treeview_list_duplicity_files = ttk.Treeview(self.frame_treeview, show="tree")
         self.update_list_duplicate_files()
 
         self.treeview_list_duplicity_files.grid(row=0, column=0, sticky=tk.NSEW)
