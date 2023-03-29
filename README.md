@@ -1,26 +1,46 @@
-# The algorithm search the duplicity files.
+# Search duplicity files v.0.1
+The application for searching files which they are in the data storages many times.
+It is possible to search only the same files and the results are only informative. 
+The application does not delete anything. The user has to find the files alone in his 
+storages. 
 
-The files in the folder have different names.
+## Requirements
+- Python 3.8 and later
+- SQLAlchemy
+- pytest (if you want to start the unit test)
 
-## The same files are the separated code blocks:
+## Installation
 
-```
-test_files/African_Elephant_(188286877).jpeg
-test_files/animals/African_Elephant_(188286877).jpeg
-```
+1. Check of installation version of Python in terminal:
 
-```
-test_files/dog-gfb6b9f480_1280.jpg
-test_files/animals/dog-gfb6b9f480_1280.jpg
-test_files/pes-duplicity.jpg
-```
+    `$ python3 --version`
 
-```
-test_files/pes-seznamka-1.jpg
-test_files/animals/pes-seznamka-1.jpg
-```
+2. Create directory for downloading this application
+3. Git clone if you have installed git or downloading zip file from GitHub.com:
 
-```
-test_files/rqhHrL.jpeg
-test_files/lavicka-duplicity.jpeg
-```
+    `git clone https://github.com/trnecka/search_duplicity_files.git`
+
+4. Install important libraries:
+
+   `pip -r requirements.txt`
+
+5. Run the application:
+
+   `python3 search_duplicity_files.py`
+
+## Action button on main window
+
+### Button: Search duplicity files
+It refreshes the list of the founded files after operations carried out by the user. 
+For example deleting files from the data storage.
+
+### Button: Root folders
+The application has administration so-called root folders. This root folders are 
+the folders for searching including sub-folders.
+
+### Button: Changed files
+The list of the changed files on the data storage. It is possible the changed files add 
+to the database of the application.
+
+### Button: Exit
+Exit this application
