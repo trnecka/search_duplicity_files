@@ -7,7 +7,7 @@ from tkinter import messagebox
 from hashlib import md5
 
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import and_
+from sqlalchemy.sql.operators import and_, or_
 
 import db
 import typing as t
@@ -159,24 +159,27 @@ def save_changed_files(session: Session, list_files: t.List[str]) -> None:
         session.commit()
 
 
-def load_duplicate_files(session: Session) -> t.List[t.Dict[db.File, t.List[db.File]]]:
+def load_duplicate_files(session: Session) -> t.List[t.List[db.File]]:
     """
-    Loading duplicate files. It finds original file and their copies.
-    It returns only files which has some duplicate.
+    Load only duplicates of the files. The first file is always the file which it founded as the first.
+    The column of the first file parent_file_id contents 0.
 
     :param session: The function create_session() from the file db.py
-    :return: List of the dictionaries. Dicticrionary contents key 'file_original' and 'file_copy'.
+    :return: The list of the list of the db.File object
     """
-    db_file_id = session.query(db.File.parent_file_id).filter(db.File.parent_file_id > 0).\
-        group_by(db.File.parent_file_id).all()
-    original_file_id = [ld[0] for ld in db_file_id]
+    # variable contents all items if it is not only one on the database (parent_file_id > 0)
+    db_file_dupl = session.query(db.File).filter(db.File.parent_file_id > 0).group_by(db.File.parent_file_id).all()
+
+    # id of the files if they have some duplicates
+    db_file_orig_ids = [dfd.parent_file_id for dfd in db_file_dupl]
+
     duplicate_files = list()
-    for ofi in original_file_id:
-        files = {
-            'file_original': session.query(db.File).filter(db.File.id == ofi).first(),
-            'file_copy': session.query(db.File).filter(db.File.parent_file_id == ofi).all()
-        }
-        duplicate_files.append(files)
+    for db_file_orig_id in db_file_orig_ids:
+        duplicate_files.append(session.query(db.File).
+                               filter(or_(db.File.id == db_file_orig_id, db.File.parent_file_id == db_file_orig_id)).
+                               order_by(db.File.id).
+                               all())
+
     return duplicate_files
 
 
@@ -205,12 +208,15 @@ def search_duplicity_files():
     print(save_files(session, files, root_folder))
     print(f"Root folder: {root_folder}")
 
-    # write all duplicate name of the files with their original (first record in the database)
-    # example output
-    for df in load_duplicate_files(session):
-        print(df.get('file_original').filename)
-        for f in df.get('file_copy'):
-            print(f"\t{f.filename}")
+    # this line is only for testing
+    # get data from strucutre
+    # the item with parent_file_id = 0 is always the first in the sub-list
+    for set_duplicate in load_duplicate_files(session):
+        for file in set_duplicate:
+            if file.parent_file_id == 0:
+                print(f"(id = {file.id}) > {file.filename}")
+            else:
+                print(f"\t(id = {file.id}) > {file.filename}")
 
     # write all duplicate files of one concrete file
     # example output
@@ -636,15 +642,13 @@ class SearchDuplicityFilesGUI(tk.Tk):
         Updating the treeview of the list duplicate files
         """
         self.treeview_list_duplicity_files.delete(*self.treeview_list_duplicity_files.get_children())
-        for df in load_duplicate_files(db_session):
-            self.insert_line(df.get('file_original').filename, df.get('file_original').id)
-            for f in df.get('file_copy'):
-                self.insert_line(f.filename, f.id)
-                self.treeview_list_duplicity_files.move(
-                    f.id,
-                    df.get("file_original").id,
-                    f.id
-                )
+        for ldf in load_duplicate_files(db_session):
+            for file in ldf:
+                if file.parent_file_id == 0:
+                    self.insert_line(file.filename, file.id)
+                else:
+                    self.insert_line(file.filename, file.id)
+                    self.treeview_list_duplicity_files.move(file.id, ldf[0].id, file.id)
 
     def dialog_changed_files_show(self) -> None:
         """
@@ -665,3 +669,6 @@ if __name__ == '__main__':
 
     window = SearchDuplicityFilesGUI()
     window.mainloop()
+
+
+
