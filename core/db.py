@@ -29,9 +29,6 @@ class File(Base):
     filename: Mapped[str] = mapped_column(String(1000), nullable=False, comment="Full path to the file.")
     """ The name of the file """
 
-    parent_file_id: Mapped[int] = mapped_column(default=0, comment="ID of the parent file from this table. Zero is the first founded file.")
-    """ ID of the first file found or 0 if the file is the fist found """
-
     root_folder_id: Mapped[int] = mapped_column(Integer, ForeignKey("root_folder.id", ondelete='CASCADE'), comment="Folder for searching duplicate files.")
     """ ID mapped folder """
 

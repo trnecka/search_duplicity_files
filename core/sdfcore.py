@@ -1,9 +1,11 @@
+from sqlalchemy import func
+
 from core import db
 from hashlib import md5
 import typing as t
 import os
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import and_, or_
+from sqlalchemy.sql.operators import and_
 
 # create database session
 global db_session
@@ -41,6 +43,7 @@ def get_hash(path_file: str) -> str:
     return hash_file
 
 
+# -del-
 def get_parent_file_id(session: Session, file: str) -> int:
     """
     The function returns id of this file.
@@ -116,7 +119,6 @@ def save_files(session: Session, root_folder: str) -> None:
                 db.File(
                     filehash=get_hash(file),
                     filename=file,
-                    parent_file_id=get_parent_file_id(session, file),
                     root_folder_id=saved_root_folder.id
                 )
             )
@@ -160,24 +162,23 @@ def save_changed_files(session: Session, list_files: t.List[str]) -> None:
 
 def load_duplicate_files(session: Session) -> t.List[t.List[db.File]]:
     """
-    Load only duplicates of the files. The first file is always the file which it founded as the first.
-    The column of the first file parent_file_id contents 0.
+    Load only duplicates of the files. The list of the list of the files is sorted by 'id' of the file.
 
     :param session: The function create_session() from the file db.py
     :return: The list of the list of the db.File object
     """
-    # variable contents all items if it is not only one on the database (parent_file_id > 0)
-    db_file_dupl = session.query(db.File).filter(db.File.parent_file_id > 0).group_by(db.File.parent_file_id).all()
-
-    # id of the files if they have some duplicates
-    db_file_orig_ids = [dfd.parent_file_id for dfd in db_file_dupl]
-
     duplicate_files = list()
-    for db_file_orig_id in db_file_orig_ids:
-        duplicate_files.append(session.query(db.File).
-                               filter(or_(db.File.id == db_file_orig_id, db.File.parent_file_id == db_file_orig_id)).
-                               order_by(db.File.id).
-                               all())
+
+    # get duplicate hash of files
+    # query: select * from (select count(*) as file_number, filehash from file group by filehash) where file_number > 1;
+    subquery = session.query(
+        func.count(db.File.filehash).label("filenumber"),
+        db.File.filehash.label("filehash")
+    ).group_by(db.File.filehash).subquery("subquery")
+
+    hashes = session.query(subquery.c.filehash).filter(subquery.c.filenumber > 1).all()
+    for hash in hashes:
+        duplicate_files.append(session.query(db.File).filter(db.File.filehash == hash[0]).all())
 
     return duplicate_files
 
@@ -188,11 +189,11 @@ def get_duplicates_for_file(session: Session, file: str) -> t.List[db.File]:
 
     :param session: The function create_session() from the file db.py
     :param file: Full path to the file.
-    :return: List of the object File sorted by 'parent_file_id'. If the file does not exist, this function returns empty list.
+    :return: List of the object File sorted by 'id'. If the file does not exist, this function returns empty list.
     """
     if not os.path.exists(file):
         return []
 
     hash_file = get_hash(file)
-    duplicates = session.query(db.File).filter(db.File.filehash == hash_file).order_by(db.File.parent_file_id).all()
+    duplicates = session.query(db.File).filter(db.File.filehash == hash_file).order_by(db.File.id).all()
     return duplicates

@@ -1,5 +1,6 @@
 import os
 
+import core.sdfcore
 from core import db
 
 from core.sdfcore import load_duplicate_files, get_duplicates_for_file, save_files, load_files
@@ -37,6 +38,3 @@ if __name__ == '__main__':
 
     window = SearchDuplicityFilesGUI()
     window.mainloop()
-
-
-

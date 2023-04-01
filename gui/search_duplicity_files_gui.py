@@ -120,13 +120,18 @@ class SearchDuplicityFilesGUI(tk.Tk):
         Updating the treeview of the list duplicate files
         """
         self.treeview_list_duplicity_files.delete(*self.treeview_list_duplicity_files.get_children())
-        for ldf in load_duplicate_files(db_session):
-            for file in ldf:
-                if file.parent_file_id == 0:
-                    self.insert_line(file.filename, file.id)
-                else:
-                    self.insert_line(file.filename, file.id)
-                    self.treeview_list_duplicity_files.move(file.id, ldf[0].id, file.id)
+
+        # list all duplicate files
+        list_duplicates = load_duplicate_files(db_session)
+
+        # create parent item
+        for duplicate_files in list_duplicates:
+            # create parent item
+            first_file = duplicate_files.pop(0)
+            self.insert_line(first_file.filename, first_file.id)
+            for file in duplicate_files:
+                self.insert_line(file.filename, file.id)
+                self.treeview_list_duplicity_files.move(file.id, first_file.id, file.id)
 
     def dialog_changed_files_show(self) -> None:
         """
