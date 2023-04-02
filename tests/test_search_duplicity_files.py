@@ -58,6 +58,7 @@ def test_get_hash_returns_correct_hash_for_file(file, hash):
     assert sdf.get_hash(file) == hash
 
 
+# helped function
 def basic_database_create():
     import config
     database_file = config.CONNECTION_STRING.split('/')[-1]
@@ -66,4 +67,45 @@ def basic_database_create():
     engine = db.load_engine()
     db.create_db_structure(engine)
     session = db.create_session(engine)
+    sdf.save_files(session, ROOT_FOLDER)
     return session
+
+
+def test_load_duplicate_files_number_of_the_sublists_is_4():
+    assert len(sdf.load_duplicate_files(basic_database_create())) == 4
+
+
+def test_load_duplicate_files_all_files_are_in_output():
+    # structure of the output
+    expected_files = [
+        [
+            ROOT_FOLDER + "pes-seznamka-1.jpg",
+            ROOT_FOLDER + "animals/pes-seznamka-1.jpg"
+        ],
+        [
+            ROOT_FOLDER + "lavicka-duplicity.jpeg",
+            ROOT_FOLDER + "rqhHrL.jpeg"
+        ],
+        [
+            ROOT_FOLDER + "dog-gfb6b9f480_1280.jpg",
+            ROOT_FOLDER + "pes-duplicity.jpg",
+            ROOT_FOLDER + "animals/dog-gfb6b9f480_1280.jpg"
+        ],
+        [
+            ROOT_FOLDER + "African_Elephant_(188286877).jpeg",
+            ROOT_FOLDER + "animals/African_Elephant_(188286877).jpeg"
+        ]
+    ]
+
+    # get data from database
+    files_from_database = list()
+    for set_files in sdf.load_duplicate_files(basic_database_create()):
+        list_files = list()
+        for file in set_files:
+            list_files.append(file.filename)
+        files_from_database.append(list_files)
+
+    assert all([ffd == ef for ffd, ef in zip(files_from_database, expected_files)])
+
+
+
