@@ -19,12 +19,10 @@ def search_duplicity_files():
     # this line is only for testing
     # get data from strucutre
     # the item with parent_file_id = 0 is always the first in the sub-list
-    for set_duplicate in load_duplicate_files(session):
-        for file in set_duplicate:
-            if file.parent_file_id == 0:
-                print(f"(id = {file.id}) > {file.filename}")
-            else:
-                print(f"\t(id = {file.id}) > {file.filename}")
+    for set_duplicate_files in load_duplicate_files(session):
+        print(f"> {set_duplicate_files.pop(0).filename}")
+        for file in set_duplicate_files:
+            print(f"\t {file.filename}")
 
     # write all duplicate files of one concrete file
     # example output

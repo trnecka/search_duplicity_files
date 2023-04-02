@@ -43,24 +43,6 @@ def get_hash(path_file: str) -> str:
     return hash_file
 
 
-# -del-
-def get_parent_file_id(session: Session, file: str) -> int:
-    """
-    The function returns id of this file.
-
-    :param session: The function create_session() from the file db.py
-    :param file: Full path to the file.
-    :return: Id of the existing hash file, if it does not exist, it will be returned 0.
-    """
-    existing_hash = session.query(db.File).filter(
-        db.File.filehash == get_hash(file) and db.File.parent_file_id == 0
-    ).first()
-    if existing_hash:
-        return existing_hash.id
-    else:
-        return 0
-
-
 def file_exists(session: Session, file: str) -> bool:
     """
     Check if the file exists in database. File has to have the same hash and filename.
