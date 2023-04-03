@@ -108,4 +108,17 @@ def test_load_duplicate_files_all_files_are_in_output():
     assert all([ffd == ef for ffd, ef in zip(files_from_database, expected_files)])
 
 
+names_of_files = [
+    "African_Elephant_(188286877).jpeg",
+    "animals/sheep-eating-grass.jpg",
+    "PUmFFwcN.html",
+    "pes-duplicity.jpg"
+]
+
+full_path_to_files = map(lambda file: ROOT_FOLDER + file, names_of_files)
+
+
+@pytest.mark.parametrize('file', full_path_to_files, ids=names_of_files)
+def test_file_exists(file):
+    assert sdf.file_exists(basic_database_create(), file)
 
