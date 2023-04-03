@@ -56,25 +56,6 @@ def file_exists(session: Session, file: str) -> bool:
     ).first())
 
 
-def is_file_changed(session: Session, file: str) -> bool:
-    """
-    The function check if the file is the same as the file saved in the database.
-    The file has the same path (like in the database) but it has different content.
-
-    :param session: The function create_session() from the file db.py
-    :param file: Full path to the file.
-    :return: True if the file is different in the database else False.
-    """
-    input_file_hash = get_hash(file)
-    database_file = session.query(db.File).filter(
-        db.File.filename == file
-    ).first()
-    if database_file is not None:
-        if input_file_hash != database_file.filehash:
-            return True
-    return False
-
-
 def save_files(session: Session, root_folder: str) -> None:
     """
     Saving files to the database if the files do not exist in the database.
@@ -163,19 +144,3 @@ def load_duplicate_files(session: Session) -> t.List[t.List[db.File]]:
         duplicate_files.append(session.query(db.File).filter(db.File.filehash == hash[0]).all())
 
     return duplicate_files
-
-
-def get_duplicates_for_file(session: Session, file: str) -> t.List[db.File]:
-    """
-    Function gets all duplicates by full path to file
-
-    :param session: The function create_session() from the file db.py
-    :param file: Full path to the file.
-    :return: List of the object File sorted by 'id'. If the file does not exist, this function returns empty list.
-    """
-    if not os.path.exists(file):
-        return []
-
-    hash_file = get_hash(file)
-    duplicates = session.query(db.File).filter(db.File.filehash == hash_file).order_by(db.File.id).all()
-    return duplicates
