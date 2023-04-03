@@ -109,3 +109,31 @@ full_path_to_files = map(lambda file: ROOT_FOLDER + file, names_of_files)
 def test_file_exists(file):
     assert sdf.file_exists(basic_database_create(), file)
 
+
+def test_check_changed_files_no_file_changed():
+    assert sdf.check_changed_files(basic_database_create()) == []
+
+
+@pytest.mark.parametrize("file", [ROOT_FOLDER + "requirements.txt"], ids=["requirements.txt"])
+def test_check_changed_files_detect_changed_file_during_test(file):
+    # read the origin file
+    with open(file, "r") as f:
+        origin_file = f.read()
+
+    # change the origin file
+    with open(file, "a") as fc:
+        fc.write("Tested string")
+
+    # load the database session
+    engine = db.load_engine()
+    db.create_db_structure(engine)
+    session = db.create_session(engine)
+
+    # check changed files
+    changed_files = sdf.check_changed_files(session)
+
+    # returning the changes of the file
+    with open(file, "w") as fo:
+        fo.write(origin_file)
+
+    assert changed_files == [file]
