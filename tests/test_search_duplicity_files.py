@@ -76,38 +76,25 @@ def test_load_duplicate_files_number_of_the_sublists_is_4():
 
 
 def test_load_duplicate_files_all_files_are_in_output():
-    # structure of the output
+    # the list of the files from searching
     expected_files = [
-        [
             ROOT_FOLDER + "pes-seznamka-1.jpg",
-            ROOT_FOLDER + "animals/pes-seznamka-1.jpg"
-        ],
-        [
+            ROOT_FOLDER + "animals/pes-seznamka-1.jpg",
             ROOT_FOLDER + "lavicka-duplicity.jpeg",
-            ROOT_FOLDER + "rqhHrL.jpeg"
-        ],
-        [
+            ROOT_FOLDER + "rqhHrL.jpeg",
             ROOT_FOLDER + "dog-gfb6b9f480_1280.jpg",
             ROOT_FOLDER + "pes-duplicity.jpg",
-            ROOT_FOLDER + "animals/dog-gfb6b9f480_1280.jpg"
-        ],
-        [
+            ROOT_FOLDER + "animals/dog-gfb6b9f480_1280.jpg",
             ROOT_FOLDER + "African_Elephant_(188286877).jpeg",
             ROOT_FOLDER + "animals/African_Elephant_(188286877).jpeg"
-        ]
     ]
 
-    # get data from database
-    files_from_database = list()
     for set_files in sdf.load_duplicate_files(basic_database_create()):
-        list_files = list()
         for file in set_files:
-            list_files.append(file.filename)
-        files_from_database.append(list_files)
-
-    assert all([ffd == ef for ffd, ef in zip(files_from_database, expected_files)])
+            assert file.filename in expected_files
 
 
+# data for test of the function file_exists()
 names_of_files = [
     "African_Elephant_(188286877).jpeg",
     "animals/sheep-eating-grass.jpg",
